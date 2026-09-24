@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Syncfusion.Blazor.Buttons" Version="34.1.29" />
+    <PackageReference Include="Syncfusion.Blazor.Core" Version="34.1.29" />
+    <PackageReference Include="Syncfusion.Blazor.Inputs" Version="34.1.29" />
+    <PackageReference Include="Syncfusion.Blazor.Navigations" Version="34.1.29" />
+    <PackageReference Include="Syncfusion.Blazor.Spinner" Version="34.1.29" />
+    <PackageReference Include="Syncfusion.Blazor.Themes" Version="34.1.29" />
+    <PackageReference Include="Syncfusion.Licensing" Version="34.1.29" />
+  </ItemGroup>
+
+</Project>

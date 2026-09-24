@@ -1,0 +1,28 @@
+// Per-component Material 3 themes from the already-installed EJ2 packages.
+// Base first, then each component's own stylesheet — keeps the bundle small.
+@import '@syncfusion/ej2-base/styles/material3.css';
+@import '@syncfusion/ej2-buttons/styles/button/material3.css';
+@import '@syncfusion/ej2-inputs/styles/uploader/material3.css';
+@import '@syncfusion/ej2-navigations/styles/appbar/material3.css';
+@import '@syncfusion/ej2-popups/styles/spinner/material3.css';
+
+/* Global styles for Convert & Merge Documents to PDF (Angular) */
+:root {
+  --bg: #f5f7fb;
+  --text-title: #0f172a;
+  --text-muted: #475569;
+  --text-faint: #64748b;
+
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  color: #1f2937;
+  background: var(--bg);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+}

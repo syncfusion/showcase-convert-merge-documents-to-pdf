@@ -1,0 +1,7 @@
+{
+  "/Merge": {
+    "target": "http://localhost:5183",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

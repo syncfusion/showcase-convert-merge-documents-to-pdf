@@ -1,0 +1,18 @@
+@baseUrl = http://localhost:5183
+
+### API is running
+GET {{baseUrl}}/
+
+### Health
+GET {{baseUrl}}/health
+
+### Merge documents
+POST {{baseUrl}}/Merge/MergeDocuments
+Content-Type: multipart/form-data; boundary=----merge
+
+------merge
+Content-Disposition: form-data; name="files"; filename="sample.pdf"
+Content-Type: application/pdf
+
+< ./wwwroot/Data/sample.pdf
+------merge--

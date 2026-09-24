@@ -1,0 +1,132 @@
+:host {
+  display: block;
+  --bright-blue: oklch(51.01% 0.274 263.83);
+  --electric-violet: oklch(53.18% 0.28 296.97);
+  --french-violet: oklch(47.66% 0.246 305.88);
+  --vivid-pink: oklch(69.02% 0.277 332.77);
+  --hot-red: oklch(61.42% 0.238 15.34);
+  --orange-red: oklch(63.32% 0.24 31.68);
+
+  --gray-900: oklch(19.37% 0.006 300.98);
+  --gray-800: oklch(29.32% 0.008 301.86);
+  --gray-700: oklch(36.98% 0.014 302.71);
+  --gray-400: oklch(70.9% 0.015 304.04);
+
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --border: #e2e8f0;
+  --text-title: #0f172a;
+  --text-muted: #475569;
+  --text-faint: #64748b;
+}
+
+.app-root {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem 4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.hero {
+  text-align: center;
+}
+
+.hero__title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+  color: var(--text-title);
+}
+
+.hero__tagline {
+  font-size: 1.05rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 14px;
+  padding: 2rem;
+  box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Light container wrapping the EJ2 Uploader component. */
+.dropzone {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1rem;
+  background: #f8fafc;
+
+  .e-uploader .e-list-item .e-filename {
+    word-break: break-all;
+  }
+}
+
+.error {
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.6rem 0.9rem;
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.generate-btn {
+  align-self: flex-start;
+}
+
+.syncfusion-logo {
+  background: url("/syncfusion-primary-logo.svg") center / contain no-repeat;
+  height: 30px;
+  width: 150px;
+}
+
+.appbar-title {
+  margin-left: 12px;
+  font-weight: 600;
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  text-align: center;
+  gap: 0.75rem;
+}
+
+.spinner-host {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.loading__text {
+  font-weight: 600;
+  color: #4338ca;
+  margin: 0;
+}
+
+@media (max-width: 600px) {
+  .hero__title {
+    font-size: 1.6rem;
+  }
+  .filelist__item {
+    grid-template-columns: 1fr;
+    gap: 0.25rem;
+  }
+}

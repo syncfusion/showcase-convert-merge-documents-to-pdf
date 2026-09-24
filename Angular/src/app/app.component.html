@@ -1,0 +1,53 @@
+﻿<ejs-appbar colorMode="Light" [isSticky]="true">
+  <a href="/" aria-label="Syncfusion">
+    <div class="syncfusion-logo"></div>
+  </a>
+  <span class="appbar-title">Convert & Merge Documents to PDF</span>
+</ejs-appbar>
+
+<div class="app-root">
+  <header class="hero">
+    <h1 class="hero__title">Convert & Merge Documents to PDF</h1>
+    <p class="hero__tagline">
+      Upload Word, Excel, PowerPoint, HTML, Markdown, XPS, images, or PDF — merge them all
+      into one PDF.
+    </p>
+  </header>
+
+  <main class="panel">
+    @if (loading()) {
+      <div class="loading" aria-live="polite" aria-busy="true">
+        <div #spinnerHost class="spinner-host"></div>
+        <p class="loading__text">Generating merged PDF…</p>
+      </div>
+    } @else {
+      <p class="hint">
+        Drag &amp; drop files here or browse. Allowed: {{ acceptedExtensions.join(', ') }}
+      </p>
+
+      <div class="dropzone">
+        <ejs-uploader
+          [autoUpload]="false"
+          [multiple]="true"
+          [allowedExtensions]="acceptAttr"
+          (selected)="onSelected($event)"
+          (removing)="onRemoving($event)"
+        ></ejs-uploader>
+      </div>
+
+      @if (error()) {
+        <p class="error" role="alert">{{ error() }}</p>
+      }
+
+      <button
+        ejs-button
+        cssClass="e-success generate-btn"
+        [disabled]="files().length === 0"
+        (click)="onGenerate()"
+        aria-label="Generate PDF"
+      >
+        Generate PDF
+      </button>
+    }
+  </main>
+</div>

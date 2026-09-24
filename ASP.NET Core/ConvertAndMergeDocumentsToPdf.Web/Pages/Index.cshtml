@@ -1,0 +1,49 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Convert & Merge Documents to PDF";
+}
+
+<div class="app-root">
+    <header class="hero">
+        <h1 class="hero__title">Convert &amp; Merge Documents to PDF</h1>
+        <p class="hero__tagline">
+            Upload Word, Excel, PowerPoint, HTML, Markdown, XPS, images, or PDF — merge them all into one PDF.
+        </p>
+    </header>
+
+    <main class="panel"
+          id="mergePanel"
+          data-api="@Model.ApiBaseUrl"
+          data-extensions="@IndexModel.AllowedExtensions">
+        <div id="formPane">
+            <p class="hint">
+                Drag &amp; drop files here or browse. Allowed: @IndexModel.AllowedExtensions
+            </p>
+            <div class="dropzone">
+                <ejs-uploader id="uploader"
+                              autoUpload="false"
+                              multiple="true"
+                              allowedExtensions="@IndexModel.AllowedExtensions"
+                              selected="onFileSelected"
+                              removing="onFileRemoving"
+                              change="onFilesChanged">
+                </ejs-uploader>
+            </div>
+            <p id="mergeError" class="error" role="alert" hidden></p>
+            <ejs-button id="generate"
+                        cssClass="e-success"
+                        content="Generate PDF"
+                        onclick="onGenerate()">
+            </ejs-button>
+        </div>
+        <div id="loadingPane" class="loading" aria-live="polite" aria-busy="true">
+            <div id="spinnerHost" class="spinner-host"></div>
+            <p class="loading__text">Generating merged PDF…</p>
+        </div>
+    </main>
+</div>
+
+@section Scripts {
+    <script src="~/js/merge.js" asp-append-version="true"></script>
+}

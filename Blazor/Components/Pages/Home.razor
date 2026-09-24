@@ -1,0 +1,277 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@using System.Net.Http.Headers
+@using System.IO
+@using Syncfusion.Blazor.Inputs
+@using Syncfusion.Blazor.Buttons
+@using Syncfusion.Blazor.Spinner
+@inject IHttpClientFactory HttpClientFactory
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Convert & Merge Documents to PDF</PageTitle>
+
+<div class="hero">
+    <h1 class="hero__title">Convert & Merge Documents to PDF</h1>
+    <p class="hero__tagline">
+        Upload Word, Excel, PowerPoint, HTML, Markdown, XPS, images, or PDF — merge them all into one PDF.
+    </p>
+</div>
+
+<section class="panel">
+    @if (loading)
+    {
+        <div class="loading" aria-live="polite" aria-busy="true">
+            <div class="spinner-host">
+                <SfSpinner Visible="true" Type="SpinnerType.Material3" />
+            </div>
+            <p class="loading__text">Generating merged PDF…</p>
+        </div>
+    }
+    else
+    {
+        <p class="hint">
+            Drag & drop files here or browse. Allowed: @string.Join(", ", AcceptedExtensions)
+        </p>
+
+        <div class="dropzone">
+            <SfUploader @ref="uploader"
+                        AutoUpload="false"
+                        AllowMultiple="true"
+                        AllowedExtensions="@AllowedExtensionsAttr"
+                        DropArea=".dropzone"
+                        MaxFileSize="@MaxFileSize">
+                <UploaderEvents FileSelected="@OnFileSelected"
+                                ValueChange="@OnValueChange"
+                                OnRemove="@OnFileRemoving" />
+            </SfUploader>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error" role="alert">@errorMessage</p>
+        }
+
+        <SfButton CssClass="e-success generate-btn"
+                   Disabled="@(_selectedFileNames.Count == 0)"
+                   OnClick="@OnGenerateClick">
+            Generate PDF
+        </SfButton>
+    }
+</section>
+
+@code {
+    private SfUploader? uploader;
+    private List<string> _selectedFileNames = new();
+    private bool loading;
+    private string? errorMessage;
+
+    private const long MaxFileSize = 2 * 1024 * 1024; // 2 MB (Blazor client limit)
+    private const string DownloadFilename = "MergedDocument.pdf";
+
+    // In-memory copy of each selected file's bytes, captured via ValueChange
+    // so Generate can POST them server-side to the merge API through HttpClient
+    // (no SaveUrl, no browser-to-API CORS, no Blob-over-SignalR). Streaming
+    // large files through SignalR is slow and memory-heavy, hence the 2 MB
+    // MaxFileSize cap above for this client.
+    private sealed class UploadedFile : IDisposable
+    {
+        public string Name { get; init; } = "";
+        public MemoryStream Stream { get; init; } = new();
+        public void Dispose() => Stream?.Dispose();
+    }
+
+    private readonly List<UploadedFile> _files = new();
+    // Matches MergeController.ConvertToPdfAsync.
+    private static readonly string[] AcceptedExtensions =
+        [".pdf", ".doc", ".docx", ".dot", ".dotx", ".rtf",
+         ".xlsx", ".xls",
+         ".pptx", ".ppt",
+         ".jpg", ".jpeg", ".png",
+         ".html", ".htm", ".xps", ".md"];
+
+    private static readonly string AllowedExtensionsAttr =
+        string.Join(",", AcceptedExtensions);
+
+    private static readonly HashSet<string> _acceptedSet = new(
+        AcceptedExtensions, StringComparer.OrdinalIgnoreCase);
+
+    // FileSelected fires when files are picked (browse or drag-and-drop),
+    // before ValueChange. We pre-validate extensions and sizes here and use
+    // args.Cancel to reject invalid selections so we never buffer them. The
+    // actual byte capture happens in OnValueChange (below), which fires next
+    // and copies each file into a server-side MemoryStream.
+    private void OnFileSelected(SelectedEventArgs args)
+    {
+        errorMessage = null;
+        var rejected = new List<string>();
+
+        foreach (var info in args.FilesData)
+        {
+            var name = info.Name ?? "unknown";
+            var ext = Path.GetExtension(name) ?? string.Empty;
+
+            if (!_acceptedSet.Contains(ext))
+            {
+                rejected.Add(name);
+                continue;
+            }
+
+            if (info.Size > MaxFileSize)
+            {
+                rejected.Add($"{name} (exceeds 2 MB)");
+            }
+        }
+
+        if (rejected.Count > 0)
+        {
+            errorMessage = $"Unsupported or oversized file(s): {string.Join(", ", rejected)}";
+            args.Cancel = true;
+        }
+    }
+
+    // ValueChange fires after FileSelected once the files are available on the
+    // server. Buffer each validated file's bytes into a MemoryStream so
+    // OnGenerateClick can POST them to the merge API via HttpClient.
+    private async Task OnValueChange(UploadChangeEventArgs args)
+    {
+        foreach (var fileEntry in args.Files)
+        {
+            var name = fileEntry.FileInfo.Name;
+            var ext = Path.GetExtension(name) ?? string.Empty;
+            if (!_acceptedSet.Contains(ext))
+            {
+                continue;
+            }
+
+            // De-dup by name; replace a previous buffer if re-added.
+            var existing = _files.FirstOrDefault(f => f.Name == name);
+            if (existing is not null)
+            {
+                _files.Remove(existing);
+                existing.Dispose();
+            }
+
+            var uploaded = new UploadedFile { Name = name };
+            try
+            {
+                await fileEntry.File.OpenReadStream(MaxFileSize)
+                    .CopyToAsync(uploaded.Stream);
+                uploaded.Stream.Position = 0;
+                _files.Add(uploaded);
+            }
+            catch (Exception ex)
+            {
+                uploaded.Dispose();
+                errorMessage = $"Failed to read '{name}': {ex.Message}";
+            }
+        }
+
+        SyncFileNames();
+    }
+
+    private void OnFileRemoving(RemovingEventArgs args)
+    {
+        errorMessage = null;
+        foreach (var info in args.FilesData)
+        {
+            var match = _files.FirstOrDefault(f => f.Name == info.Name);
+            if (match is not null)
+            {
+                _files.Remove(match);
+                match.Dispose();
+            }
+        }
+        SyncFileNames();
+    }
+
+    private void SyncFileNames()
+    {
+        _selectedFileNames.Clear();
+        _selectedFileNames.AddRange(_files.Select(f => f.Name));
+    }
+
+    private async Task OnGenerateClick()
+    {
+        if (_files.Count == 0)
+        {
+            errorMessage = "Please add at least one file before generating a PDF.";
+            return;
+        }
+
+        errorMessage = null;
+        loading = true;
+
+        // POST the buffered files server-side to the merge API via the
+        // "MergeApi" HttpClient (BaseAddress from appsettings, no CORS). The
+        // API binds the multipart field name "files" to List<IFormFile>.
+        var client = HttpClientFactory.CreateClient("MergeApi");
+
+        using var multipart = new MultipartFormDataContent();
+        foreach (var file in _files)
+        {
+            file.Stream.Position = 0;
+            var content = new StreamContent(file.Stream);
+            content.Headers.ContentType = new MediaTypeHeaderValue("application/octet-stream");
+            multipart.Add(content, "files", file.Name);
+        }
+
+        try
+        {
+            using var response = await client.PostAsync("/Merge/MergeDocuments", multipart);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var text = await response.Content.ReadAsStringAsync();
+                errorMessage = string.IsNullOrWhiteSpace(text)
+                    ? $"Merge failed (HTTP {response.StatusCode})."
+                    : text;
+                return;
+            }
+
+            var bytes = await response.Content.ReadAsByteArrayAsync();
+
+            if (bytes.Length == 0)
+            {
+                errorMessage = "No PDF data returned from the server.";
+                return;
+            }
+
+            await DownloadBytesAsync(bytes, DownloadFilename);
+        }
+        catch (HttpRequestException ex)
+        {
+            errorMessage = $"Could not reach the merge service: {ex.Message}";
+        }
+        finally
+        {
+            await ResetAsync();
+        }
+    }
+
+    private async Task ResetAsync()
+    {
+        foreach (var file in _files)
+        {
+            file.Dispose();
+        }
+        _files.Clear();
+
+        _selectedFileNames.Clear();
+        if (uploader is not null)
+        {
+            await uploader.ClearAllAsync();
+        }
+        loading = false;
+    }
+
+    // Trigger browser download via IJSRuntime using a Blob + anchor.
+    private async Task DownloadBytesAsync(byte[] bytes, string filename)
+    {
+        var base64 = Convert.ToBase64String(bytes);
+        await JSRuntime.InvokeVoidAsync(
+            "convertAndMerge.downloadBlob",
+            base64,
+            "application/pdf",
+            filename);
+    }
+}
